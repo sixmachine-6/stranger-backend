@@ -87,17 +87,17 @@ io.on("connection", (socket) => {
 
   socket.on("offer", (data) => {
     const message = JSON.parse(data);
-    socket.broadcast.emit("offer", message);
+    socket.broadcast.emit("offer-sent", message);
   });
 
   socket.on("candidate", (data) => {
     const message = JSON.parse(data);
-    socket.broadcast.emit("candidate", message);
+    socket.broadcast.emit("candidate-sent", message);
   });
 
   socket.on("answer", (data) => {
     const message = JSON.parse(data);
-    socket.broadcast.emit("answer", message);
+    socket.broadcast.emit("answer-sent", message);
   });
 });
 
