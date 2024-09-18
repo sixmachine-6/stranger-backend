@@ -5,7 +5,7 @@ const { Server } = require("socket.io");
 const Chat = require("./Chat");
 
 const chats = [];
-let pendingUser;
+let pendingUser = null;
 dotenv.config({ path: "./config.env" });
 const app = express();
 
@@ -35,6 +35,7 @@ io.on("connection", (socket) => {
       console.log(chat);
     } else {
       pendingUser = socket.id;
+      console.log(socket.id, pendingUser);
       socket.emit("pairing", "Wait Until we find stranger??");
       console.log(pendingUser);
     }
@@ -58,21 +59,45 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
+    console.log(socket.id);
+
     const chatIndex = chats.findIndex(
       (chat) => chat.stranger1 === socket.id || chat.stranger2 === socket.id
     );
 
     if (chatIndex !== -1) {
       const chatFound = chats[chatIndex];
-      pendingUser =
+      const remainingUser =
         chatFound.stranger1 === socket.id
           ? chatFound.stranger2
           : chatFound.stranger1;
 
-      io.to(pendingUser).emit("disconnected", "Wait until we find stanger??");
+      io.to(remainingUser).emit("disconnected", "Wait until we find stanger??");
+
+      if (!pendingUser) {
+        pendingUser = remainingUser;
+        console.log("New pending user:", pendingUser);
+      }
+    } else {
+      pendingUser = null;
     }
 
     chats.splice(chatIndex, 1);
+  });
+
+  socket.on("offer", (data) => {
+    const message = JSON.parse(data);
+    socket.broadcast.emit("offer", message);
+  });
+
+  socket.on("candidate", (data) => {
+    const message = JSON.parse(data);
+    socket.broadcast.emit("candidate", message);
+  });
+
+  socket.on("answer", (data) => {
+    const message = JSON.parse(data);
+    socket.broadcast.emit("answer", message);
   });
 });
 
